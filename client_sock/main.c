@@ -70,12 +70,7 @@ void main() {
 
 	freeaddrinfo(result);
 
-	int s_bytes = send(s, sendbuf, (int)strlen(sendbuf), 0);
-	if (s_bytes == SOCKET_ERROR) errors_f(5);
-	else {
-		printf("%d BYTES SENT!\n", s_bytes);
-	}
-	//if (shutdown(s, SD_SEND)) errors_f(6);
+	if (!send(s, sendbuf, (int)strlen(sendbuf), 0)) errors_f(5);
 
 	int r_bytes;
 	do {
@@ -84,8 +79,13 @@ void main() {
 		if (r_bytes > 0) {
 			printf("%d BYTES RECEIVED!\n", r_bytes);
 			printf("MSG: %s\n", recvbuf);
-			if (GetFileAttributesW(recvbuf) == INVALID_FILE_ATTRIBUTES) send(s, "There is no such file.", 23, 0);
-			else DeleteFile(recvbuf);
+			if (GetFileAttributesA(recvbuf) == INVALID_FILE_ATTRIBUTES) {
+				if (!send(s, "There is no such file", 23, 0)) errors_f(5);
+			}
+			else {
+				DeleteFileA(recvbuf);
+				send(s, "The file has been successfully deleted", 39, 0);
+			};
 		}
 		else if (r_bytes == 0) printf("Connecton closed!\n");
 		else errors_f(0);
