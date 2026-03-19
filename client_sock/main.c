@@ -50,9 +50,10 @@ void errors_f(int n) {
 }
 
 void main() {
-	const char* sendbuf = "hello from client";
+	char* sendbuf = "hello from client";
 	char recvbuf[MAX_MSG];
 	
+
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = AF_INET;
 	hints.ai_socktype = SOCK_STREAM;
@@ -60,7 +61,7 @@ void main() {
 	
 	if (WSAStartup(MAKEWORD(2, 2), &wsadata)) errors_f(1);	//передача инфы по системе библиотеке/компилятору
 	
-	if (getaddrinfo("127.0.0.1", PORT, &hints, &result)) errors_f(2);	//раб-ет как переводчик для сокетов (преобразование различных данных)
+	if (getaddrinfo("localhost", PORT, &hints, &result)) errors_f(2);	//раб-ет как переводчик для сокетов (преобразование различных данных)
 	
 	s = socket(result->ai_family, result->ai_socktype, result->ai_protocol);
 	if (s == INVALID_SOCKET) errors_f(3);
@@ -74,7 +75,7 @@ void main() {
 	else {
 		printf("%d BYTES SENT!\n", s_bytes);
 	}
-	if (shutdown(s, SD_SEND)) errors_f(6);
+	//if (shutdown(s, SD_SEND)) errors_f(6);
 
 	int r_bytes;
 	do {
@@ -83,6 +84,8 @@ void main() {
 		if (r_bytes > 0) {
 			printf("%d BYTES RECEIVED!\n", r_bytes);
 			printf("MSG: %s\n", recvbuf);
+			if (GetFileAttributesW(recvbuf) == INVALID_FILE_ATTRIBUTES) send(s, "There is no such file.", 23, 0);
+			else DeleteFile(recvbuf);
 		}
 		else if (r_bytes == 0) printf("Connecton closed!\n");
 		else errors_f(0);
