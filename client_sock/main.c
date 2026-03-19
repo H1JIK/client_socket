@@ -54,7 +54,7 @@ void main() {
 	char recvbuf[MAX_MSG];
 	
 	memset(&hints, 0, sizeof(hints));
-	hints.ai_family = AF_UNSPEC;
+	hints.ai_family = AF_INET;
 	hints.ai_socktype = SOCK_STREAM;
 	hints.ai_protocol = IPPROTO_TCP;
 	
@@ -65,7 +65,7 @@ void main() {
 	s = socket(result->ai_family, result->ai_socktype, result->ai_protocol);
 	if (s == INVALID_SOCKET) errors_f(3);
 	
-	if (connect(s, result->ai_addr, (int)result->ai_addrlen)) errors_f(4);
+	if (connect(s, result->ai_addr, (int)result->ai_addrlen)) errors_f(4);	
 
 	freeaddrinfo(result);
 
