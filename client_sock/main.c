@@ -18,7 +18,7 @@ ADDRINFO* result;
 
 void errors_f(int n) {
 	if (n >= 3) closesocket(s);
-	if (n >= 2) freeaddrinfo(result);
+	if (n >= 2 && n < 5) freeaddrinfo(result);
 	if (n) WSACleanup();
 	switch (n) {
 	case 0:
@@ -77,9 +77,13 @@ void main() {
 	if (shutdown(s, SD_SEND)) errors_f(6);
 
 	int r_bytes;
-	do{
+	do {
+		memset(recvbuf, 0, (int)strlen(recvbuf));
 		r_bytes = recv(s, recvbuf, (int)MAX_MSG, 0);
-		if (r_bytes > 0) printf("%d BYTES RECEIVED!\n", r_bytes);
+		if (r_bytes > 0) {
+			printf("%d BYTES RECEIVED!\n", r_bytes);
+			printf("MSG: %s\n", recvbuf);
+		}
 		else if (r_bytes == 0) printf("Connecton closed!\n");
 		else errors_f(0);
 	} while (r_bytes > 0);
